@@ -70,6 +70,7 @@
  */
 #if defined(CONFIG_LD_DEAD_CODE_DATA_ELIMINATION) || defined(CONFIG_LTO_CLANG)
 #define TEXT_MAIN .text .text.[0-9a-zA-Z_]*
+#define TEXT_CFI_MAIN .text.cfi .text.[0-9a-zA-Z_]*.cfi
 #define DATA_MAIN .data .data.[0-9a-zA-Z_]*
 #define SDATA_MAIN .sdata .sdata.[0-9a-zA-Z_]*
 #define RODATA_MAIN .rodata .rodata.[0-9a-zA-Z_]*
@@ -77,6 +78,7 @@
 #define SBSS_MAIN .sbss .sbss.[0-9a-zA-Z_]*
 #else
 #define TEXT_MAIN .text
+#define TEXT_CFI_MAIN .text.cfi
 #define DATA_MAIN .data
 #define SDATA_MAIN .sdata
 #define RODATA_MAIN .rodata
@@ -465,6 +467,7 @@
 		ALIGN_FUNCTION();					\
 		*(.text.hot TEXT_MAIN .text.fixup .text.unlikely)	\
 		*(.text..ftrace)					\
+		*(TEXT_CFI_MAIN) 					\
 		*(.ref.text)						\
 	MEM_KEEP(init.text*)						\
 	MEM_KEEP(exit.text*)						\
