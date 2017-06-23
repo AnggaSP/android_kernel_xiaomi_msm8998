@@ -1132,6 +1132,8 @@ struct sched_group;
 struct sched_domain_shared {
 	atomic_t	ref;
 	atomic_t	nr_busy_cpus;
+
+	bool            overutilized;
 };
 
 struct eas_stats {
