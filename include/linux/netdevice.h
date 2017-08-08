@@ -2619,7 +2619,7 @@ struct softnet_data {
 
 #ifdef CONFIG_RPS
 	/* Elements below can be accessed between CPUs for RPS */
-	struct call_single_data	csd ____cacheline_aligned_in_smp;
+	call_single_data_t	csd ____cacheline_aligned_in_smp;
 	struct softnet_data	*rps_ipi_next;
 	unsigned int		cpu;
 	unsigned int		input_queue_head;
