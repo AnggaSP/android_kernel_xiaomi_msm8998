@@ -2991,7 +2991,7 @@ pvm_determine_end_from_reverse(struct vmap_area **va, unsigned long align)
  * does everything top-down and scans free blocks from the end looking
  * for matching base. While scanning, if any of the areas do not fit the
  * base address is pulled down to fit the area. Scanning is repeated till 
- * all the areas fit and then all necessary data structres are inserted 
+ * all the areas fit and then all necessary data structures are inserted 
  * and the result is returned.
  */
 struct vm_struct **pcpu_get_vm_areas(const unsigned long *offsets,
@@ -3021,15 +3021,11 @@ struct vm_struct **pcpu_get_vm_areas(const unsigned long *offsets,
 		if (start > offsets[last_area])
 			last_area = area;
 
-		for (area2 = 0; area2 < nr_vms; area2++) {
+		for (area2 = area + 1; area2 < nr_vms; area2++) {
 			unsigned long start2 = offsets[area2];
 			unsigned long end2 = start2 + sizes[area2];
 
-			if (area2 == area)
-				continue;
-
-			BUG_ON(start2 >= start && start2 < end);
-			BUG_ON(end2 <= end && end2 > start);
+			BUG_ON(start2 < end && start < end2);
 		}
 	}
 	last_end = offsets[last_area] + sizes[last_area];
