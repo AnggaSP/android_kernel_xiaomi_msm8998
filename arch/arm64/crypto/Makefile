@@ -22,7 +22,9 @@ poly-hash-ce-y := poly-hash-ce-glue.o poly-hash-ce-core.o
 
 obj-$(CONFIG_CRYPTO_AES_ARM64_CE) += aes-ce-cipher.o
 ifneq ($(CONFIG_ARCH_MSM8998), y)
-CFLAGS_aes-ce-cipher.o += -march=armv8-a+crypto
+CFLAGS_aes-ce-cipher.o += -march=armv8-a+crypto $(DISABLE_LTO)
+else
+CFLAGS_aes-ce-cipher.o += $(DISABLE_LTO)
 endif
 
 obj-$(CONFIG_CRYPTO_AES_ARM64_CE_CCM) += aes-ce-ccm.o
