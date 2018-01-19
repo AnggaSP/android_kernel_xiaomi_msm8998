@@ -73,9 +73,9 @@ EXPORT_SYMBOL(_mcount);
 NOKPROBE_SYMBOL(_mcount);
 #endif
 	/* caching functions */
-EXPORT_SYMBOL(__dma_inv_range);
-EXPORT_SYMBOL(__dma_clean_range);
-EXPORT_SYMBOL(__dma_flush_range);
+EXPORT_SYMBOL(__dma_inv_area);
+EXPORT_SYMBOL(__dma_clean_area);
+EXPORT_SYMBOL(__dma_flush_area);
 
 	/* arm-smccc */
 EXPORT_SYMBOL(arm_smccc_smc);
