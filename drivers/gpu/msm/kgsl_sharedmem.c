@@ -566,29 +566,29 @@ static inline unsigned int _fixup_cache_range_op(unsigned int op)
 }
 #endif
 
-static int kgsl_do_cache_op(struct page *page, void *addr,
-		uint64_t offset, uint64_t size, unsigned int op)
+static inline void _cache_op(unsigned int op,
+			const void *start, const void *end)
 {
-	void (*cache_op)(const void *, const void *);
-
 	/*
 	 * The dmac_xxx_range functions handle addresses and sizes that
 	 * are not aligned to the cacheline size correctly.
 	 */
 	switch (_fixup_cache_range_op(op)) {
 	case KGSL_CACHE_OP_FLUSH:
-		cache_op = dmac_flush_range;
+		dmac_flush_range(start, end);
 		break;
 	case KGSL_CACHE_OP_CLEAN:
-		cache_op = dmac_clean_range;
+		dmac_clean_range(start, end);
 		break;
 	case KGSL_CACHE_OP_INV:
-		cache_op = dmac_inv_range;
+		dmac_inv_range(start, end);
 		break;
-	default:
-		return -EINVAL;
 	}
+}
 
+static int kgsl_do_cache_op(struct page *page, void *addr,
+		uint64_t offset, uint64_t size, unsigned int op)
+{
 	if (page != NULL) {
 		unsigned long pfn = page_to_pfn(page) + offset / PAGE_SIZE;
 		/*
@@ -608,7 +608,8 @@ static int kgsl_do_cache_op(struct page *page, void *addr,
 
 				page = pfn_to_page(pfn++);
 				addr = kmap_atomic(page);
-				cache_op(addr + offset, addr + offset + len);
+				_cache_op(op, addr + offset,
+						addr + offset + len);
 				kunmap_atomic(addr);
 
 				size -= len;
@@ -621,7 +622,7 @@ static int kgsl_do_cache_op(struct page *page, void *addr,
 		addr = page_address(page);
 	}
 
-	cache_op(addr + offset, addr + offset + (size_t) size);
+	_cache_op(op, addr + offset, addr + offset + (size_t) size);
 	return 0;
 }
 
@@ -629,9 +630,6 @@ int kgsl_cache_range_op(struct kgsl_memdesc *memdesc, uint64_t offset,
 		uint64_t size, unsigned int op)
 {
 	void *addr = NULL;
-	struct sg_table *sgt = NULL;
-	struct scatterlist *sg;
-	unsigned int i, pos = 0;
 	int ret = 0;
 
 	if (size == 0 || size > UINT_MAX)
@@ -659,38 +657,40 @@ int kgsl_cache_range_op(struct kgsl_memdesc *memdesc, uint64_t offset,
 	 * If the buffer is not to mapped to kernel, perform cache
 	 * operations after mapping to kernel.
 	 */
-	if (memdesc->sgt != NULL)
-		sgt = memdesc->sgt;
-	else {
-		if (memdesc->pages == NULL)
-			return ret;
+	if (memdesc->sgt != NULL) {
+		struct scatterlist *sg;
+		unsigned int i, pos = 0;
 
-		sgt = kgsl_alloc_sgt_from_pages(memdesc);
-		if (IS_ERR(sgt))
-			return PTR_ERR(sgt);
-	}
+		for_each_sg(memdesc->sgt->sgl, sg, memdesc->sgt->nents, i) {
+			uint64_t sg_offset, sg_left;
 
-	for_each_sg(sgt->sgl, sg, sgt->nents, i) {
-		uint64_t sg_offset, sg_left;
-
-		if (offset >= (pos + sg->length)) {
+			if (offset >= (pos + sg->length)) {
+				pos += sg->length;
+				continue;
+			}
+			sg_offset = offset > pos ? offset - pos : 0;
+			sg_left = (sg->length - sg_offset > size) ? size :
+						sg->length - sg_offset;
+			ret = kgsl_do_cache_op(sg_page(sg), NULL, sg_offset,
+								sg_left, op);
+			size -= sg_left;
+			if (size == 0)
+				break;
 			pos += sg->length;
-			continue;
 		}
-		sg_offset = offset > pos ? offset - pos : 0;
-		sg_left = (sg->length - sg_offset > size) ? size :
-					sg->length - sg_offset;
-		ret = kgsl_do_cache_op(sg_page(sg), NULL, sg_offset,
-							sg_left, op);
-		size -= sg_left;
-		if (size == 0)
-			break;
-		pos += sg->length;
+	} else if (memdesc->pages != NULL) {
+		addr = vmap(memdesc->pages, memdesc->page_count,
+				VM_IOREMAP, pgprot_writecombine(PAGE_KERNEL));
+		if (addr == NULL)
+			return -ENOMEM;
+
+		/* Make sure the offset + size do not overflow the address */
+		if (addr + ((size_t) offset + (size_t) size) < addr)
+			return -ERANGE;
+
+		ret = kgsl_do_cache_op(NULL, addr, offset, size, op);
+		vunmap(addr);
 	}
-
-	if (memdesc->sgt == NULL)
-		kgsl_free_sgt(sgt);
-
 	return ret;
 }
 EXPORT_SYMBOL(kgsl_cache_range_op);
