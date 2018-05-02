@@ -865,6 +865,13 @@ DISABLE_LTO	:= $(DISABLE_LTO_CLANG)
 export DISABLE_LTO
 endif
 
+ifdef CONFIG_SHADOW_CALL_STACK
+scs-flags	:= -fsanitize=shadow-call-stack
+KBUILD_CFLAGS	+= $(scs-flags)
+DISABLE_SCS	:= -fno-sanitize=shadow-call-stack
+export DISABLE_SCS
+endif
+
 # arch Makefile may override CC so keep this after arch Makefile is included
 NOSTDINC_FLAGS += -nostdinc -isystem $(shell $(CC) -print-file-name=include)
 CHECKFLAGS     += $(NOSTDINC_FLAGS)
@@ -1158,6 +1165,11 @@ ifdef lto-flags
   ifeq ($(call cc-option, $(lto-flags)),)
 	@echo Cannot use CONFIG_LTO: $(lto-flags) not supported by compiler \
 		>&2 && exit 1
+  endif
+endif
+ifdef scs-flags
+  ifeq ($(call cc-option, $(scs-flags)),)
+	@echo Cannot use CONFIG_SHADOW_CALL_STACK: $(scs-flags) not supported by compiler >&2 && exit 1
   endif
 endif
 

@@ -80,6 +80,7 @@
 #include <linux/kcov.h>
 #include <linux/cpufreq_times.h>
 #include <linux/simple_lmk.h>
+#include <linux/scs.h>
 
 #include <asm/pgtable.h>
 #include <asm/pgalloc.h>
@@ -237,6 +238,7 @@ void free_task(struct task_struct *tsk)
 	rt_mutex_debug_task_free(tsk);
 	ftrace_graph_exit_task(tsk);
 	put_seccomp_filter(tsk);
+	scs_release(tsk);
 	arch_release_task_struct(tsk);
 	free_task_struct(tsk);
 }
@@ -380,6 +382,7 @@ static struct task_struct *dup_task_struct(struct task_struct *orig, int node)
 	clear_user_return_notifier(tsk);
 	clear_tsk_need_resched(tsk);
 	set_task_stack_end_magic(tsk);
+	scs_task_init(tsk);
 
 #ifdef CONFIG_CC_STACKPROTECTOR
 	tsk->stack_canary = get_random_long();
@@ -1538,6 +1541,9 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 	if (retval)
 		goto bad_fork_cleanup_namespaces;
 	retval = copy_thread_tls(clone_flags, stack_start, stack_size, p, tls);
+	if (retval)
+		goto bad_fork_cleanup_io;
+	retval = scs_prepare(p, node);
 	if (retval)
 		goto bad_fork_cleanup_io;
 
