@@ -845,6 +845,10 @@ ifdef CONFIG_LTO
 lto-flags	:= $(lto-clang-flags)
 KBUILD_CFLAGS	+= $(lto-flags)
 
+ifeq ($(ld-name),lld)
+LDFLAGS		+= --lto-O2
+endif
+
 DISABLE_LTO	:= $(DISABLE_LTO_CLANG)
 export DISABLE_LTO
 endif
