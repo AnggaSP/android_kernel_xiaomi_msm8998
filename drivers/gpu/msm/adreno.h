@@ -790,6 +790,7 @@ struct adreno_gpudev {
 	unsigned int (*preemption_post_ibsubmit)(struct adreno_device *,
 				unsigned int *);
 	int (*preemption_init)(struct adreno_device *);
+	void (*preemption_close)(struct adreno_device *);
 	void (*preemption_schedule)(struct adreno_device *);
 	void (*enable_64bit)(struct adreno_device *);
 	void (*clk_set_options)(struct adreno_device *,
