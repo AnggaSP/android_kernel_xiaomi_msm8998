@@ -102,5 +102,6 @@
 		qcom,mdss-dsi-te-check-enable;
 		qcom,mdss-dsi-te-using-te-pin;
 		qcom,mdss-dsi-tx-eot-append;
+		qcom,panel-allow-phy-poweroff;
 	};
 };
