@@ -20,6 +20,7 @@
 #include <linux/input/qpnp-power-on.h>
 #include <linux/irq.h>
 #include <linux/pmic-voter.h>
+#include <linux/moduleparam.h>
 #include "smb-lib.h"
 #include "smb-reg.h"
 #include "battery.h"
@@ -2641,12 +2642,17 @@ int smblib_get_prop_die_health(struct smb_charger *chg,
 #define SDP_CURRENT_UA			500000
 #define CDP_CURRENT_UA			1500000
 #ifdef CONFIG_MACH_XIAOMI_MSM8998
-#define DCP_CURRENT_UA			1800000
-#define HVDCP_CURRENT_UA		1500000
-#define HVDCP3_CURRENT_UA		3000000
+static unsigned int dcp_current_ua = 1800000;
+static unsigned int hvdcp_current_ua = 1500000;
+static unsigned int hvdcp3_current_ua = 3000000;
+module_param(dcp_current_ua, uint, 0644);
+module_param(hvdcp_current_ua, uint, 0644);
+module_param(hvdcp3_current_ua, uint, 0644);
 #else
-#define DCP_CURRENT_UA			1500000
-#define HVDCP_CURRENT_UA		3000000
+static unsigned int dcp_current_ua = 1500000;
+static unsigned int hvdcp_current_ua = 3000000;
+module_param(dcp_current_ua, uint, 0644);
+module_param(hvdcp_current_ua, uint, 0644);
 #endif
 #define TYPEC_DEFAULT_CURRENT_UA	900000
 #define TYPEC_MEDIUM_CURRENT_UA		1500000
@@ -2663,7 +2669,7 @@ static int get_rp_based_dcp_current(struct smb_charger *chg, int typec_mode)
 	case POWER_SUPPLY_TYPEC_SOURCE_DEFAULT:
 	/* fall through */
 	default:
-		rp_ua = DCP_CURRENT_UA;
+		rp_ua = dcp_current_ua;
 	}
 
 	return rp_ua;
@@ -3224,19 +3230,19 @@ int smblib_get_charge_current(struct smb_charger *chg,
 #ifdef CONFIG_MACH_XIAOMI_MSM8998
 	/* QC 2.0 adapter*/
 	if (apsd_result->bit & QC_2P0_BIT) {
-		*total_current_ua = HVDCP_CURRENT_UA;
+		*total_current_ua = hvdcp_current_ua;
 		return 0;
 	}
 
 	/* QC 3.0 adapter */
 	if (apsd_result->bit & QC_3P0_BIT) {
-		*total_current_ua = HVDCP3_CURRENT_UA;
+		*total_current_ua = hvdcp3_current_ua;
 		return 0;
 	}
 #else
 	/* QC 2.0/3.0 adapter */
 	if (apsd_result->bit & (QC_3P0_BIT | QC_2P0_BIT)) {
-		*total_current_ua = HVDCP_CURRENT_UA;
+		*total_current_ua = hvdcp_current_ua;
 		return 0;
 	}
 #endif
@@ -3249,7 +3255,7 @@ int smblib_get_charge_current(struct smb_charger *chg,
 		case DCP_CHARGER_BIT:
 		case OCP_CHARGER_BIT:
 		case FLOAT_CHARGER_BIT:
-			current_ua = DCP_CURRENT_UA;
+			current_ua = dcp_current_ua;
 			break;
 		default:
 			current_ua = 0;
@@ -3737,9 +3743,9 @@ static void smblib_handle_hvdcp_3p0_auth_done(struct smb_charger *chg,
 
 #ifdef CONFIG_MACH_XIAOMI_MSM8998
 	if (apsd_result->bit & QC_2P0_BIT) {
-		current_ua = HVDCP_CURRENT_UA;
+		current_ua = hvdcp_current_ua;
 	} else if (apsd_result->bit & QC_3P0_BIT) {
-		current_ua = HVDCP3_CURRENT_UA;
+		current_ua = hvdcp3_current_ua;
 	}
 
 	vote(chg->usb_icl_votable, LEGACY_UNKNOWN_VOTER, true,
