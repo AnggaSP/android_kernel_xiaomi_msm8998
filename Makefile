@@ -843,6 +843,8 @@ endif
 lto-clang-flags += -fvisibility=hidden -fvisibility-inlines-hidden
 lto-clang-flags += $(call cc-option, -fsplit-lto-unit)
 
+KBUILD_LDS_MODULE += $(srctree)/scripts/module-lto.lds
+
 # allow disabling only clang LTO where needed
 DISABLE_LTO_CLANG := -fno-lto -fvisibility=default
 export DISABLE_LTO_CLANG
