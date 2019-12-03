@@ -840,6 +840,8 @@ lto-clang-flags	:= -flto
 endif
 lto-clang-flags += $(call cc-option, -fsplit-lto-unit)
 
+KBUILD_LDS_MODULE += $(srctree)/scripts/module-lto.lds
+
 # allow disabling only clang LTO where needed
 DISABLE_LTO_CLANG := -fno-lto -fvisibility=default
 export DISABLE_LTO_CLANG
