@@ -840,7 +840,7 @@ lto-clang-flags	:= -flto
 endif
 lto-clang-flags += $(call cc-option, -fsplit-lto-unit)
 
-KBUILD_LDFLAGS_MODULE += -T $(srctree)/scripts/module-lto.lds
+KBUILD_LDFLAGS_MODULE += -T scripts/module-lto.lds
 
 # Limit inlining across translation units to reduce binary size
 LD_FLAGS_LTO_CLANG := -mllvm -import-instr-limit=5
