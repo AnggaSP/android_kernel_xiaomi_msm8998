@@ -17,6 +17,10 @@ GZFLAGS		:=-9
 
 ifneq ($(CONFIG_RELOCATABLE),)
 LDFLAGS_vmlinux		+= -pie -Bsymbolic
+
+ifeq ($(ld-name),lld)
+LDFLAGS_vmlinux		+= -z notext
+endif
 endif
 
 ifeq ($(CONFIG_ARM64_ERRATUM_843419),y)
