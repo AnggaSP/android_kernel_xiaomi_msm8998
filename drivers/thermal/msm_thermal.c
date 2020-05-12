@@ -1162,7 +1162,7 @@ static void update_cpu_freq(int cpu, enum freq_limits changed)
 }
 
 static ssize_t cluster_info_show(
-	struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+	struct module_attribute *attr, struct module_kobject *kobj, char *buf)
 {
 	uint32_t i = 0;
 	ssize_t tot_size = 0, size = 0;
@@ -1302,7 +1302,7 @@ create_exit:
 	return ret;
 }
 
-static struct kobj_attribute cluster_info_attr = __ATTR_RO(cluster_info);
+static struct module_attribute cluster_info_attr = __ATTR_RO(cluster_info);
 static int create_cpu_topology_sysfs(void)
 {
 	int ret = 0;
@@ -2159,7 +2159,7 @@ static uint32_t msm_thermal_str_to_int(const char *inp)
 }
 
 static ssize_t sensor_info_show(
-	struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+	struct module_attribute *attr, struct module_kobject *kobj, char *buf)
 {
 	int i;
 	ssize_t tot_size = 0, size = 0;
@@ -5528,8 +5528,8 @@ psm_reg_exit:
 	return ret;
 }
 
-static ssize_t bucket_info_store(struct kobject *kobj,
-	struct kobj_attribute *attr, const char *buf, size_t count)
+static ssize_t bucket_info_store(struct module_attribute *attr,
+	struct module_kobject *kobj, const char *buf, size_t count)
 {
 	int ret = 0;
 	uint32_t val = 0;
@@ -5550,12 +5550,12 @@ done_store:
 }
 
 static ssize_t bucket_info_show(
-	struct kobject *kobj, struct kobj_attribute *attr, char *buf)
+	struct module_attribute *attr, struct module_kobject *kobj, char *buf)
 {
 	return snprintf(buf, PAGE_SIZE, "%d\n", bucket);
 }
 
-static struct kobj_attribute bucket_info_attr =
+static struct module_attribute bucket_info_attr =
 		__ATTR_RW(bucket_info);
 static int msm_thermal_add_bucket_info_nodes(void)
 {
@@ -5578,7 +5578,7 @@ static int msm_thermal_add_bucket_info_nodes(void)
 	return ret;
 }
 
-static struct kobj_attribute sensor_info_attr =
+static struct module_attribute sensor_info_attr =
 		__ATTR_RO(sensor_info);
 static int msm_thermal_add_sensor_info_nodes(void)
 {
