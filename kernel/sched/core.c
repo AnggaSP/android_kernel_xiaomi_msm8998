@@ -1336,7 +1336,9 @@ void set_task_cpu(struct task_struct *p, unsigned int new_cpu)
 		p->se.nr_migrations++;
 		perf_event_task_migrate(p);
 
+#ifdef CONFIG_SCHED_WALT
 		walt_fixup_busy_time(p, new_cpu);
+#endif
 	}
 
 	__set_task_cpu(p, new_cpu);
@@ -1972,7 +1974,7 @@ try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags,
 {
 	unsigned long flags;
 	int cpu, src_cpu, success = 0;
-#ifdef CONFIG_SMP
+#ifdef CONFIG_SCHED_WALT
 	struct rq *rq;
 	u64 wallclock;
 #endif
@@ -2056,6 +2058,7 @@ try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags,
 	 */
 	smp_rmb();
 
+#ifdef CONFIG_SCHED_WALT
 	rq = cpu_rq(task_cpu(p));
 
 	raw_spin_lock(&rq->lock);
@@ -2063,6 +2066,7 @@ try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags,
 	walt_update_task_ravg(rq->curr, rq, TASK_UPDATE, wallclock, 0);
 	walt_update_task_ravg(p, rq, TASK_WAKE, wallclock, 0);
 	raw_spin_unlock(&rq->lock);
+#endif
 
 	p->sched_contributes_to_load = !!task_contributes_to_load(p);
 	p->state = TASK_WAKING;
@@ -2133,10 +2137,12 @@ static void try_to_wake_up_local(struct task_struct *p)
 	trace_sched_waking(p);
 
 	if (!task_on_rq_queued(p)) {
+#ifdef CONFIG_SCHED_WALT
 		u64 wallclock = walt_ktime_clock();
 
 		walt_update_task_ravg(rq->curr, rq, TASK_UPDATE, wallclock, 0);
 		walt_update_task_ravg(p, rq, TASK_WAKE, wallclock, 0);
+#endif
 		ttwu_activate(rq, p, ENQUEUE_WAKEUP);
 	}
 
@@ -2209,7 +2215,9 @@ static void __sched_fork(unsigned long clone_flags, struct task_struct *p)
 #endif
 
 	INIT_LIST_HEAD(&p->se.group_node);
+#ifdef CONFIG_SCHED_WALT
 	walt_init_new_task_load(p);
+#endif
 
 #ifdef CONFIG_FAIR_GROUP_SCHED
 	p->se.cfs_rq			= NULL;
@@ -2493,7 +2501,9 @@ void wake_up_new_task(struct task_struct *p)
 	raw_spin_lock_irqsave(&p->pi_lock, flags);
 	p->state = TASK_RUNNING;
 
+#ifdef CONFIG_SCHED_WALT
 	walt_init_new_task_load(p);
+#endif
 
 	/* Initialize new task's runnable average */
 	init_entity_runnable_average(&p->se);
@@ -2512,7 +2522,9 @@ void wake_up_new_task(struct task_struct *p)
 	update_rq_clock(rq);
 	post_init_entity_util_avg(&p->se);
 
+#ifdef CONFIG_SCHED_WALT
 	walt_mark_task_starting(p);
+#endif
 	activate_task(rq, p, ENQUEUE_WAKEUP_NEW);
 	p->on_rq = TASK_ON_RQ_QUEUED;
 	trace_sched_wakeup_new(p);
@@ -3032,9 +3044,11 @@ void scheduler_tick(void)
 	sched_clock_tick();
 
 	raw_spin_lock(&rq->lock);
+#ifdef CONFIG_SCHED_WALT
 	walt_set_window_start(rq);
 	walt_update_task_ravg(rq->curr, rq, TASK_UPDATE,
 			walt_ktime_clock(), 0);
+#endif
 	update_rq_clock(rq);
 	curr->sched_class->task_tick(rq, curr, 0);
 	update_cpu_load_active(rq);
@@ -3319,7 +3333,9 @@ static void __sched notrace __schedule(bool preempt)
 	unsigned long *switch_count;
 	struct rq *rq;
 	int cpu;
+#ifdef CONFIG_SCHED_WALT
 	u64 wallclock;
+#endif
 
 	cpu = smp_processor_id();
 	rq = cpu_rq(cpu);
@@ -3383,9 +3399,11 @@ static void __sched notrace __schedule(bool preempt)
 		update_rq_clock(rq);
 
 	next = pick_next_task(rq, prev);
+#ifdef CONFIG_SCHED_WALT
 	wallclock = walt_ktime_clock();
 	walt_update_task_ravg(prev, rq, PUT_PREV_TASK, wallclock, 0);
 	walt_update_task_ravg(next, rq, PICK_NEXT_TASK, wallclock, 0);
+#endif
 	clear_tsk_need_resched(prev);
 	clear_preempt_need_resched();
 	rq->clock_skip_update = 0;
@@ -5834,9 +5852,11 @@ migration_call(struct notifier_block *nfb, unsigned long action, void *hcpu)
 	switch (action & ~CPU_TASKS_FROZEN) {
 
 	case CPU_UP_PREPARE:
+#ifdef CONFIG_SCHED_WALT
 		raw_spin_lock_irqsave(&rq->lock, flags);
 		walt_set_window_start(rq);
 		raw_spin_unlock_irqrestore(&rq->lock, flags);
+#endif
 		rq->calc_load_update = calc_load_update;
 		break;
 
@@ -5856,7 +5876,9 @@ migration_call(struct notifier_block *nfb, unsigned long action, void *hcpu)
 		sched_ttwu_pending();
 		/* Update our root-domain */
 		raw_spin_lock_irqsave(&rq->lock, flags);
+#ifdef CONFIG_SCHED_WALT
 		walt_migrate_sync_cpu(cpu);
+#endif
 		if (rq->rd) {
 			BUG_ON(!cpumask_test_cpu(cpu, rq->rd->span));
 			set_rq_offline(rq);

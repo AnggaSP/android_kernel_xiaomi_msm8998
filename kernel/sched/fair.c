@@ -4828,7 +4828,9 @@ enqueue_task_fair(struct rq *rq, struct task_struct *p, int flags)
 		if (cfs_rq_throttled(cfs_rq))
 			break;
 		cfs_rq->h_nr_running++;
+#ifdef CONFIG_SCHED_WALT
 		walt_inc_cfs_cumulative_runnable_avg(cfs_rq, p);
+#endif
 
 		flags = ENQUEUE_WAKEUP;
 	}
@@ -4836,7 +4838,9 @@ enqueue_task_fair(struct rq *rq, struct task_struct *p, int flags)
 	for_each_sched_entity(se) {
 		cfs_rq = cfs_rq_of(se);
 		cfs_rq->h_nr_running++;
+#ifdef CONFIG_SCHED_WALT
 		walt_inc_cfs_cumulative_runnable_avg(cfs_rq, p);
+#endif
 
 		if (cfs_rq_throttled(cfs_rq))
 			break;
@@ -4871,7 +4875,9 @@ enqueue_task_fair(struct rq *rq, struct task_struct *p, int flags)
 	schedtune_enqueue_task(p, cpu_of(rq));
 
 	if (!se) {
+#ifdef CONFIG_SCHED_WALT
 		walt_inc_cumulative_runnable_avg(rq, p);
+#endif
 		if (!task_new && !rq->rd->overutilized &&
 		    cpu_overutilized(rq->cpu)) {
 			rq->rd->overutilized = true;
@@ -4912,7 +4918,9 @@ static void dequeue_task_fair(struct rq *rq, struct task_struct *p, int flags)
 		if (cfs_rq_throttled(cfs_rq))
 			break;
 		cfs_rq->h_nr_running--;
+#ifdef CONFIG_SCHED_WALT
 		walt_dec_cfs_cumulative_runnable_avg(cfs_rq, p);
+#endif
 
 		/* Don't dequeue parent if it has other entities besides us */
 		if (cfs_rq->load.weight) {
@@ -4934,7 +4942,9 @@ static void dequeue_task_fair(struct rq *rq, struct task_struct *p, int flags)
 
 		cfs_rq = cfs_rq_of(se);
 		cfs_rq->h_nr_running--;
+#ifdef CONFIG_SCHED_WALT
 		walt_dec_cfs_cumulative_runnable_avg(cfs_rq, p);
+#endif
 
 		if (cfs_rq_throttled(cfs_rq))
 			break;
@@ -4962,9 +4972,10 @@ static void dequeue_task_fair(struct rq *rq, struct task_struct *p, int flags)
 	 * selection of the OPP.
 	 */
 	schedtune_dequeue_task(p, cpu_of(rq));
-
+#ifdef CONFIG_SCHED_WALT
 	if (!se)
 		walt_dec_cumulative_runnable_avg(rq, p);
+#endif
 #endif /* CONFIG_SMP */
 
 	hrtick_update(rq);
@@ -6531,8 +6542,10 @@ static inline int find_best_target(struct task_struct *p, int *backup_cpu,
 			if (!cpu_online(i))
 				continue;
 
+#ifdef CONFIG_SCHED_WALT
 			if (walt_cpu_high_irqload(i))
 				continue;
+#endif
 
 			/*
 			 * p's blocked utilization is still accounted for on prev_cpu
