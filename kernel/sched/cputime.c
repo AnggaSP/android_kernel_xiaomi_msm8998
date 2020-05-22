@@ -6,7 +6,9 @@
 #include <linux/context_tracking.h>
 #include <linux/cpufreq_times.h>
 #include "sched.h"
+#ifdef CONFIG_SCHED_WALT
 #include "walt.h"
+#endif
 
 
 #ifdef CONFIG_IRQ_TIME_ACCOUNTING
