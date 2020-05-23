@@ -100,3 +100,9 @@ SCHED_FEAT(EAS_PREFER_IDLE, true)
  * restrictions.
  */
 SCHED_FEAT(MIN_CAPACITY_CAPPING, true)
+
+/*
+ * HiSilicon migration hysteresis filter. Limit the amount of balancing
+ * by the cfs and energy aware scheduler.
+ */
+SCHED_FEAT(HISI_FILTER, true)
