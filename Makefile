@@ -833,11 +833,12 @@ endif
 
 ifdef CONFIG_LTO_CLANG
 ifdef CONFIG_THINLTO
-lto-clang-flags	:= -flto=thin -fvisibility=hidden -fvisibility-inlines-hidden
+lto-clang-flags	:= -flto=thin
 LDFLAGS		+= --thinlto-cache-dir=.thinlto-cache
 else
 lto-clang-flags	:= -flto
 endif
+lto-clang-flags += -fvisibility=hidden -fvisibility-inlines-hidden
 lto-clang-flags += $(call cc-option, -fsplit-lto-unit)
 
 KBUILD_LDFLAGS_MODULE += -T scripts/module-lto.lds
