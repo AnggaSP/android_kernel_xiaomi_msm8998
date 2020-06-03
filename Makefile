@@ -653,6 +653,11 @@ KBUILD_CFLAGS   += -O2
 endif
 endif
 
+ifeq ($(CONFIG_ARCH_MSM8998), y)
+KBUILD_CFLAGS	+= -mcpu=cortex-a53+crc+crypto
+KBUILD_AFLAGS	+= -mcpu=cortex-a53+crc+crypto
+endif
+
 ifdef CONFIG_CC_WERROR
 KBUILD_CFLAGS	+= -Werror
 endif
